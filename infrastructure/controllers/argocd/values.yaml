@@ -1,0 +1,148 @@
+configs:
+  cm:
+    create: true
+    application.resourceTrackingMethod: "annotation+label"
+    configManagementPlugins: "- name: kustomize-fetch-tunnel-id\n  init:\n    command: [\"/bin/sh\", \"-c\"]\n    args: [\"echo 'Initializing kustomize-fetch-tunnel-id plugin...'\"]\n  generate:\n    command: [\"sh\"] # The interpreter for your script\n    # This path is relative to the root of the application's\n    # Git repository when Argo CD checks it out.\n    args: [\"scripts/kustomize-patch-tunnel-id.sh\"]\n    \n"
+    # Global ignore differences using managed fields (much more efficient)
+    resource.customizations.ignoreDifferences.all: |
+      managedFieldsManagers:
+      - kube-controller-manager
+      - cilium-operator
+      - longhorn-manager
+      - external-secrets
+      - kubectl
+      - helm
+      - kustomize
+      jsonPointers:
+      - /status
+      - /metadata/managedFields
+      - /metadata/generation
+      - /metadata/resourceVersion
+      - /metadata/annotations/deployment.kubernetes.io/revision
+    # Global compare options for better defaults
+    resource.compareoptions: |
+      # Ignore status fields for all resources (best practice)
+      ignoreResourceStatusField: all
+      # Ignore RBAC changes from aggregate roles
+      ignoreAggregatedRoles: true
+      # Enable using ignore differences for reconcile optimization
+      ignoreDifferencesOnResourceUpdates: true
+    # Enable resource update optimization (reduces unnecessary reconciles)
+    resource.ignoreResourceUpdatesEnabled: "true"
+    # Global resource update ignore patterns
+    resource.customizations.ignoreResourceUpdates.all: |
+      jsonPointers:
+      - /status
+      - /metadata/generation
+      - /metadata/resourceVersion
+      - /metadata/managedFields
+    # Specific ignore differences only for truly problematic resources
+    resource.customizations.ignoreDifferences.external-secrets.io_ExternalSecret: |
+      jqPathExpressions:
+      - '.spec.data[]?.remoteRef?.conversionStrategy'
+      - '.spec.data[]?.remoteRef?.decodingStrategy'
+      - '.spec.data[]?.remoteRef?.metadataPolicy'
+  cmp:
+    create: true
+    plugins:
+      kustomize-build-with-helm:
+        generate:
+          command: ["sh", "-c"]
+          args: ["kustomize build --enable-helm"]
+  params:
+    server.insecure: true
+    controller.resource.health.persist: "false"
+    # Enable server-side apply for better conflict resolution
+    server.enable.server.side.apply: "true"
+crds:
+  install: true
+  # -- Keep CRDs on chart uninstall
+  keep: false
+controller:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 700Mi
+    limits:
+      cpu: 4000m
+      memory: 2Gi
+dex:
+  enabled: false
+  resources:
+    requests:
+      cpu: 20m
+      memory: 64Mi
+    limits:
+      cpu: 1000m
+      memory: 256Mi
+redis:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 64Mi
+    limits:
+      cpu: 2000m
+      memory: 128Mi
+server:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 4000m
+      memory: 256Mi
+repoServer:
+  containerSecurityContext:
+    readOnlyRootFilesystem: true
+  volumes:
+    - name: cmp-kustomize-build-with-helm
+      configMap:
+        name: argocd-cmp-cm
+    - name: cmp-tmp
+      emptyDir: {}
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 4000m
+      memory: 1024Mi
+  extraContainers:
+    - name: kustomize-build-with-helm
+      command:
+        - argocd-cmp-server
+      image: '{{ default .Values.global.image.repository .Values.repoServer.image.repository }}:{{ default (include "argo-cd.defaultTag" .) .Values.repoServer.image.tag }}'
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        seccompProfile:
+          type: RuntimeDefault
+        capabilities:
+          drop: ["ALL"]
+      volumeMounts:
+        - name: plugins
+          mountPath: /home/argocd/cmp-server/plugins
+        - name: cmp-kustomize-build-with-helm
+          mountPath: /home/argocd/cmp-server/config/plugin.yaml
+          subPath: kustomize-build-with-helm.yaml
+        - mountPath: /tmp
+          name: cmp-tmp
+applicationSet:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 1000m
+      memory: 512Mi
+notifications:
+  enabled: false
+  resources:
+    requests:
+      cpu: 100m
+      memory: 64Mi
+    limits:
+      cpu: 1000m
+      memory: 128Mi

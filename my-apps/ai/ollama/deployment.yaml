@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ollama
+  namespace: ollama
+  labels:
+    app.kubernetes.io/name: ollama
+    app.kubernetes.io/component: llm-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ollama
+  template:
+    metadata:
+      labels:
+        app: ollama
+        app.kubernetes.io/name: ollama
+        app.kubernetes.io/component: llm-server
+    spec:
+      runtimeClassName: nvidia
+      tolerations:
+        - key: nvidia.com/gpu
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: ollama
+          image: ollama/ollama:0.9.0
+          ports:
+            - containerPort: 11434
+              name: http
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 2000m
+              memory: 8Gi
+              nvidia.com/gpu: "1" # Use 15 GPU slices (priority access to ~1.5 GPUs)
+            limits:
+              cpu: 4000m
+              memory: 16Gi
+              nvidia.com/gpu: "1" # Use 15 GPU slices (priority access to ~1.5 GPUs)
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            runAsNonRoot: false # Ollama needs root for now
+            readOnlyRootFilesystem: false
+            seccompProfile:
+              type: RuntimeDefault
+          env:
+            - name: OLLAMA_HOST
+              value: "0.0.0.0:11434"
+            - name: OLLAMA_MODELS
+              value: "/root/.ollama/models"
+              # Removed NVIDIA env vars - device plugin handles GPU access
+          volumeMounts:
+            - name: models
+              mountPath: /root/.ollama
+            - name: config
+              mountPath: /root/.ollama/ollama.json
+              subPath: ollama.json
+              readOnly: true
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 3
+      volumes:
+        - name: models
+          persistentVolumeClaim:
+            claimName: ollama-storage-pvc
+        - name: config
+          configMap:
+            name: ollama-configmap
+            # Removed nvidia-driver hostPath - device plugin handles this
+      nodeSelector:
+        nvidia.com/gpu.present: "true" # Use GPU Operator label

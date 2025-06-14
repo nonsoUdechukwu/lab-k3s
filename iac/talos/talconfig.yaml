@@ -1,0 +1,284 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/budimanjojo/talhelper/master/pkg/config/schemas/talconfig.json
+# renovate: datasource=docker depName=ghcr.io/siderolabs/installer
+talosVersion: v1.10.4
+# renovate: datasource=docker depName=ghcr.io/siderolabs/kubelet
+kubernetesVersion: v1.33.1
+# Cluster configuration
+clusterName: proxmox-talos-cluster
+endpoint: https://192.168.10.100:6443
+clusterPodNets:
+  - 10.14.0.0/16
+clusterSvcNets:
+  - 10.15.0.0/16
+# Node configurations
+nodes:
+  # Control plane nodes
+  - hostname: talos-cluster-control-00
+    controlPlane: true
+    ipAddress: 192.168.10.100
+    installDisk: /dev/sda
+    schematic:
+      customization:
+        systemExtensions:
+          officialExtensions:
+            - siderolabs/amd-ucode
+            - siderolabs/gasket-driver
+            - siderolabs/i915
+            - siderolabs/iscsi-tools
+            - siderolabs/qemu-guest-agent
+            - siderolabs/util-linux-tools
+    networkInterfaces:
+      - deviceSelector:
+          hardwareAddr: "bc:24:11:a4:b2:97"
+        dhcp: false
+        addresses:
+          - 192.168.10.100/24
+        routes:
+          - network: 0.0.0.0/0
+            gateway: 192.168.10.1
+  - hostname: talos-cluster-control-01
+    controlPlane: true
+    ipAddress: 192.168.10.101
+    installDisk: /dev/sda
+    schematic:
+      customization:
+        systemExtensions:
+          officialExtensions:
+            - siderolabs/amd-ucode
+            - siderolabs/gasket-driver
+            - siderolabs/i915
+            - siderolabs/iscsi-tools
+            - siderolabs/qemu-guest-agent
+            - siderolabs/util-linux-tools
+    networkInterfaces:
+      - deviceSelector:
+          hardwareAddr: "bc:24:11:ed:73:bf"
+        dhcp: false
+        addresses:
+          - 192.168.10.101/24
+        routes:
+          - network: 0.0.0.0/0
+            gateway: 192.168.10.1
+  - hostname: talos-cluster-control-02
+    controlPlane: true
+    ipAddress: 192.168.10.102
+    installDisk: /dev/sda
+    schematic:
+      customization:
+        systemExtensions:
+          officialExtensions:
+            - siderolabs/amd-ucode
+            - siderolabs/gasket-driver
+            - siderolabs/i915
+            - siderolabs/iscsi-tools
+            - siderolabs/qemu-guest-agent
+            - siderolabs/util-linux-tools
+    networkInterfaces:
+      - deviceSelector:
+          hardwareAddr: "bc:24:11:98:6b:13"
+        dhcp: false
+        addresses:
+          - 192.168.10.102/24
+        routes:
+          - network: 0.0.0.0/0
+            gateway: 192.168.10.1
+  # GPU worker node
+  - hostname: talos-cluster-gpu-worker-00
+    controlPlane: false
+    ipAddress: 192.168.10.200
+    installDisk: /dev/sda
+    schematic:
+      customization:
+        systemExtensions:
+          officialExtensions:
+            - siderolabs/amd-ucode
+            - siderolabs/gasket-driver
+            - siderolabs/i915
+            - siderolabs/iscsi-tools
+            - siderolabs/nonfree-kmod-nvidia-production
+            - siderolabs/nvidia-container-toolkit-production
+            - siderolabs/qemu-guest-agent
+            - siderolabs/util-linux-tools
+    networkInterfaces:
+      - deviceSelector:
+          hardwareAddr: "bc:24:11:77:86:5f"
+        dhcp: false
+        addresses:
+          - 192.168.10.200/24
+        routes:
+          - network: 0.0.0.0/0
+            gateway: 192.168.10.1
+    nodeLabels:
+      node-type: gpu-worker
+    patches:
+      - |-
+        machine:
+          kernel:
+            modules:
+              - name: nvidia
+              - name: nvidia_uvm
+              - name: nvidia_drm
+              - name: nvidia_modeset
+          files:
+            - path: /etc/cri/conf.d/20-customization.part
+              op: create
+              content: |
+                [plugins]
+                  [plugins."io.containerd.cri.v1.runtime"]
+                    [plugins."io.containerd.cri.v1.runtime".containerd]
+                      default_runtime_name = "nvidia"
+  # Regular worker nodes
+  - hostname: talos-cluster-worker-01
+    controlPlane: false
+    ipAddress: 192.168.10.201
+    installDisk: /dev/sda
+    schematic:
+      customization:
+        systemExtensions:
+          officialExtensions:
+            - siderolabs/amd-ucode
+            - siderolabs/gasket-driver
+            - siderolabs/i915
+            - siderolabs/iscsi-tools
+            - siderolabs/qemu-guest-agent
+            - siderolabs/util-linux-tools
+    networkInterfaces:
+      - deviceSelector:
+          hardwareAddr: "bc:24:11:4c:99:a2"
+        dhcp: false
+        addresses:
+          - 192.168.10.201/24
+        routes:
+          - network: 0.0.0.0/0
+            gateway: 192.168.10.1
+    nodeLabels:
+      node-type: worker
+    patches:
+      - |-
+        machine:
+          files:
+            - path: /etc/cri/conf.d/20-customization.part
+              op: create
+              content: |
+                [plugins]
+                  [plugins."io.containerd.cri.v1.runtime"]
+                    [plugins."io.containerd.cri.v1.runtime".containerd]
+                      default_runtime_name = "runc"
+  - hostname: talos-cluster-worker-02
+    controlPlane: false
+    ipAddress: 192.168.10.203
+    installDisk: /dev/sda
+    schematic:
+      customization:
+        systemExtensions:
+          officialExtensions:
+            - siderolabs/amd-ucode
+            - siderolabs/gasket-driver
+            - siderolabs/i915
+            - siderolabs/iscsi-tools
+            - siderolabs/qemu-guest-agent
+            - siderolabs/util-linux-tools
+    networkInterfaces:
+      - deviceSelector:
+          hardwareAddr: "bc:24:11:ad:82:0d"
+        dhcp: false
+        addresses:
+          - 192.168.10.203/24
+        routes:
+          - network: 0.0.0.0/0
+            gateway: 192.168.10.1
+    nodeLabels:
+      node-type: worker
+    patches:
+      - |-
+        machine:
+          files:
+            - path: /etc/cri/conf.d/20-customization.part
+              op: create
+              content: |
+                [plugins]
+                  [plugins."io.containerd.cri.v1.runtime"]
+                    [plugins."io.containerd.cri.v1.runtime".containerd]
+                      default_runtime_name = "runc"
+# Global patches
+patches:
+  # Network configuration
+  - |-
+    machine:
+      network:
+        nameservers:
+          - 1.1.1.1
+          - 1.0.0.1
+  # Time configuration
+  - |-
+    machine:
+      time:
+        disabled: false
+        servers:
+          - time.cloudflare.com
+  # Common kernel modules and sysctls
+  - |-
+    machine:
+      sysctls:
+        vm.nr_hugepages: "1024"
+        net.core.bpf_jit_harden: 1
+      kernel:
+        modules:
+          - name: nvme_tcp
+          - name: vfio_pci
+          - name: uio_pci_generic
+# Control plane specific configuration
+controlPlane:
+  patches:
+    # Default containerd runtime for control plane nodes
+    - |-
+      machine:
+        files:
+          - path: /etc/cri/conf.d/20-customization.part
+            op: create
+            content: |
+              [plugins]
+                [plugins."io.containerd.cri.v1.runtime"]
+                  [plugins."io.containerd.cri.v1.runtime".containerd]
+                    default_runtime_name = "runc"
+    # Cluster configuration
+    - |-
+      cluster:
+        controllerManager:
+          extraArgs:
+            bind-address: 0.0.0.0
+        proxy:
+          disabled: true
+        scheduler:
+          extraArgs:
+            bind-address: 0.0.0.0
+    # CNI configuration
+    - |-
+      cluster:
+        network:
+          cni:
+            name: none
+    # Node labels for control plane nodes that should not be load balancers
+    - |-
+      machine:
+        nodeLabels:
+          node.kubernetes.io/exclude-from-external-load-balancers: ""
+# Worker specific configuration
+worker:
+  patches:
+    # Longhorn storage configuration
+    - |-
+      machine:
+        kubelet:
+          extraMounts:
+            - destination: /var/lib/longhorn
+              type: bind
+              source: /var/lib/longhorn
+              options:
+                - bind
+                - rshared
+                - rw
+        disks:
+          - device: /dev/sdb
+            partitions:
+              - mountpoint: /var/mnt/longhorn_sdb

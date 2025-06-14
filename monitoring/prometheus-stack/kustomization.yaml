@@ -1,0 +1,24 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: prometheus-stack
+resources:
+  - ns.yaml
+  - alertmanager-http-route.yaml
+  - grafana-http-route.yaml
+  - prometheus-http-route.yaml
+  - custom-alerts.yaml
+  - custom-servicemonitors.yaml
+  - dcgm-exporter.yaml # DCGM GPU monitoring
+  - gpu-alerts.yaml # GPU alerting rules
+  - gpu-dashboard.yaml # Grafana dashboard
+# Strategic merge patches to handle resource conflicts
+patchesStrategicMerge:
+  - alertmanager-config.yaml
+helmCharts:
+  - name: kube-prometheus-stack
+    repo: https://prometheus-community.github.io/helm-charts
+    version: 73.2.0
+    releaseName: kube-prometheus-stack
+    namespace: prometheus-stack
+    valuesFile: values.yaml
+    includeCRDs: true # This is the key setting!

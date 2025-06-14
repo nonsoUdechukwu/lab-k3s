@@ -1,0 +1,90 @@
+# macOS / Windows specific
+.DS_Store
+Thumbs.db
+*.ds_store # Consolidate
+
+# Python Virtual Environment
+tools/venv/
+
+# Binaries / Tools
+bin/
+/flux
+*.iso
+
+# Temp folders
+.temp*
+.private/
+.logs/
+.task/
+
+# --- IaC Specific Ignores --- 
+
+# Terraform
+*.tfvars # WARNING: Can ignore non-secret vars files too!
+*.tfstate
+*.tfstate.*
+.terraform*
+.tfplan
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+# Note: terraform.lock.hcl is usually committed, currently ignored by *.lock
+# Explicit credential vars file:
+iac/terraform/talos-cluster/credentials.auto.tfvars
+
+# Packer
+packer_cache/
+*.pkrvars.hcl
+
+# Talos
+/iac/talos/clusterconfig/ # Generated node configs
+talosconfig*
+talsecrets.yaml # Ignore unencrypted secrets file if present
+
+# SOPS / Secrets Management
+*.agekey
+.sops.keys # Folder
+*.sops.keys # Files
+.secrets*
+*.secret
+secrets?.yaml
+credentials?.yaml
+*_secret.yaml
+secret_*.yaml
+*.decrypted.*
+.decrypted~*
+
+# General Credentials & Keys
+1password-credentials.*
+tunnel-credentials.json
+credentials.* # Fixed typo
+*.key
+*.pem
+*.crt
+*.cer
+id_rsa*
+id_ed25519*
+# *.pub # Usually okay to commit public keys
+*.env # WARNING: Can ignore non-secret .env files too!
+infra/controllers/external-secrets/external-secrets-token.env
+
+# K8s / Infra Specific
+/infrastructure/controllers/argocd/charts # Downloaded charts
+/omni/apps/kube-system/cilium/charts # Downloaded charts (if still relevant)
+
+# Kubernetes Configs
+kubeconfig*
+# kubernetes/ # Might be too broad?
+
+# Lock Files (Potentially broad)
+*.lock
+
+# Misc
+config.xml
+*.pid
+/infrastructure/controllers/argocd/charts
+/node_modules
+/infrastructure/networking/cilium/charts
+*.log

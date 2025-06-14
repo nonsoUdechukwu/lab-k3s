@@ -1,0 +1,28 @@
+apiVersion: nvidia.com/v1
+kind: ClusterPolicy
+metadata:
+  name: gpu-cluster-policy
+  namespace: gpu-operator
+spec:
+  validator:
+    driver:
+      env:
+        - name: DISABLE_DEV_CHAR_SYMLINK_CREATION
+          value: "true"
+  daemonsets: {}
+  dcgm:
+    enabled: false
+  dcgmExporter:
+    enabled: true
+  devicePlugin:
+    enabled: true
+  driver:
+    enabled: false # Talos provides the driver
+  gfd:
+    enabled: true
+  nodeStatusExporter:
+    enabled: true
+  operator:
+    defaultRuntime: docker # This might need to be nvidia if Talos sets it as default via the other patch
+  toolkit:
+    enabled: false # Talos provides the toolkit

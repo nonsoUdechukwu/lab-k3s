@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: comfyui
+  namespace: comfyui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: comfyui
+  template:
+    metadata:
+      labels:
+        app: comfyui
+    spec:
+      # Node selector for GPU nodes
+      nodeSelector:
+        accelerator: nvidia-gpu
+      containers:
+        - name: comfyui
+          image: yanwk/comfyui-boot:latest
+          ports:
+            - containerPort: 8188
+          env:
+            - name: CLI_ARGS
+              value: "--listen 0.0.0.0 --port 8188"
+          resources:
+            requests:
+              memory: "8Gi"
+              cpu: "2"
+              nvidia.com/gpu: "1"
+            limits:
+              memory: "32Gi"
+              cpu: "8"
+              nvidia.com/gpu: "1"
+          volumeMounts:
+            - name: comfyui-storage
+              mountPath: /opt/ComfyUI/models
+              subPath: models
+            - name: comfyui-storage
+              mountPath: /opt/ComfyUI/output
+              subPath: output
+            - name: comfyui-storage
+              mountPath: /opt/ComfyUI/custom_nodes
+              subPath: custom_nodes
+            - name: config-volume
+              mountPath: /opt/ComfyUI/extra_model_paths.yaml
+              subPath: extra_model_paths.yaml
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8188
+            initialDelaySeconds: 60
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8188
+            initialDelaySeconds: 120
+            periodSeconds: 30
+      volumes:
+        - name: comfyui-storage
+          persistentVolumeClaim:
+            claimName: comfyui-storage
+        - name: config-volume
+          configMap:
+            name: comfyui-config

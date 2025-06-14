@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wyze-bridge-config
+  namespace: wyze-bridge
+data:
+  WB_AUTH: "False"
+  ON_DEMAND: "False"
+  TZ: "America/Detroit"
+  FILTER_NAMES: Pet Cam, Dog Cam 2, Garage
+  FILTER_BLOCK: "True"
+  QUALITY: "HD120"
+  ROTATE_DOOR: "True"
+  # Add any other non-sensitive environment variables here
+  # WB_IP: "your.node.ip.address"

@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: comfyui-config
+  namespace: comfyui
+data:
+  extra_model_paths.yaml: "base_path: /opt/ComfyUI/\ncheckpoints: models/checkpoints/\nconfigs: models/configs/\nvae: models/vae/\nclip: models/clip/\nunet: models/unet/\nclip_vision: models/clip_vision/\nstyle_models: models/style_models/\nembeddings: models/embeddings/\ndiffusers: models/diffusers/\ncontrolnet: models/controlnet/\ngligen: models/gligen/\nupscale_models: models/upscale_models/\ncustom_nodes: custom_nodes/ "

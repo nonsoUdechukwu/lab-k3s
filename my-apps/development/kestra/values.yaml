@@ -1,0 +1,16 @@
+# Only customize what we need, let the official Helm chart handle defaults
+
+# Disable ingress since we're using HTTPRoute for external access
+ingress:
+  enabled: false
+# Disable Docker-in-Docker completely (not compatible with Talos security policies)
+dind:
+  enabled: false
+# Resource configuration - increased memory for standalone mode
+resources:
+  requests:
+    memory: 1Gi
+    cpu: 500m
+  limits:
+    memory: 3Gi
+    cpu: 2000m

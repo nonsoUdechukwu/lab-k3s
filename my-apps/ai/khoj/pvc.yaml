@@ -1,0 +1,36 @@
+# PV definition (khoj-config-pv) removed
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: khoj-config-pvc
+  namespace: khoj
+  labels:
+    app: khoj
+    type: config
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: longhorn
+---
+
+
+# PV definition (khoj-models-pv) removed
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: khoj-models-pvc
+  namespace: khoj
+  labels:
+    app: khoj
+    type: models
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: longhorn

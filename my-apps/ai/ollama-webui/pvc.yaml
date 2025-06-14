@@ -1,0 +1,40 @@
+# PV definition removed
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ollama-webui-models
+  namespace: ollama-webui
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: longhorn
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ollama-webui-data
+  namespace: ollama-webui
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: longhorn
+---
+# Add the missing PVC that the deployment is referencing
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ollama-webui-storage-pvc
+  namespace: ollama-webui
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: longhorn

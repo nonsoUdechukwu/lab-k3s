@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hoarder-meilisearch
+  labels:
+    app: hoarder-meilisearch
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hoarder-meilisearch
+  template:
+    metadata:
+      labels:
+        app: hoarder-meilisearch
+    spec:
+      containers:
+        - name: meilisearch
+          image: getmeili/meilisearch:v1.11.1
+          env:
+            - name: MEILI_NO_ANALYTICS
+              value: "true"
+          volumeMounts:
+            - mountPath: /meili_data
+              name: meilisearch
+          envFrom:
+            - secretRef:
+                name: hoarder-secret
+            - configMapRef:
+                name: hoarder-configuration
+      volumes:
+        - name: meilisearch
+          persistentVolumeClaim:
+            claimName: meilisearch-pvc
